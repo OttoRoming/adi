@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS page_visit (
     date INTEGER NOT NULL,
     url TEXT NOT NULL,
     status_code INTEGER NOT NULL,
+    content_type TEXT,
     content_id TEXT NOT NULL,
     FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE
 );

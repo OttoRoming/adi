@@ -47,7 +47,13 @@ func main() {
 			slog.Error("failed to add content", "err", err)
 		}
 
-		_, err = AddPageVisit(db, r.Request.URL.String(), r.StatusCode, content_id)
+		content_type_raw := r.Headers.Get("Content-Type")
+		var content_type *string = nil
+		if content_type_raw != "" {
+			content_type = &content_type_raw
+		}
+
+		_, err = AddPageVisit(db, r.Request.URL.String(), r.StatusCode, content_type, content_id)
 		if err != nil {
 			slog.Error("failed to add page visit", "err", err)
 		}

@@ -23,12 +23,12 @@ func IsVisited(db *sqlx.DB, url string) (bool, error) {
 	return count > 0, nil
 }
 
-func AddPageVisit(db *sqlx.DB, url string, statusCode int, contentID string) (string, error) {
+func AddPageVisit(db *sqlx.DB, url string, statusCode int, contentType *string, contentID string) (string, error) {
 	id := uuid.New().String()
 	date := time.Now().Unix()
 	_, err := db.Exec(
-		"INSERT INTO page_visit (id, date, url, status_code, content_id) VALUES (?, ?, ?, ?, ?)",
-		id, date, url, statusCode, contentID,
+		"INSERT INTO page_visit (id, date, url, status_code, content_type, content_id) VALUES (?, ?, ?, ?, ?, ?)",
+		id, date, url, statusCode, contentType, contentID,
 	)
 	return id, err
 }
