@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"log/slog"
+	"os"
 
 	_ "embed"
 
@@ -15,6 +16,16 @@ import (
 var schema string
 
 func main() {
+	// Set up logging to file
+	logFile, err := os.OpenFile("crawler.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalln("failed to open log file:", err)
+	}
+	defer logFile.Close()
+
+	logger := slog.New(slog.NewTextHandler(logFile, nil))
+	slog.SetDefault(logger)
+
 	db, err := sqlx.Connect("sqlite", "database.sqlite3")
 	if err != nil {
 		log.Fatalln(err)
