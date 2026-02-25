@@ -1,38 +1,63 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"log/slog"
-	"os"
+
+	_ "embed"
 
 	"github.com/gocolly/colly"
+	"github.com/jmoiron/sqlx"
+	_ "modernc.org/sqlite"
 )
 
+//go:embed schema.sql
+var schema string
+
 func main() {
+	db, err := sqlx.Connect("sqlite", "database.sqlite3")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
+	db.MustExec(schema)
+
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.ida.liu.se"),
 	)
 
-	// Find and visit all links
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		href := e.Attr("href")
-		c.Visit(e.Request.AbsoluteURL(href))
+
+		is_visited, err := IsVisited(db, href)
+		if err != nil {
+			slog.Error("failed to check if page is visited", "err", err)
+		}
+
+		if !is_visited {
+			c.Visit(e.Request.AbsoluteURL(href))
+		}
 	})
 
 	c.OnResponse(func(r *colly.Response) {
-		filename := fmt.Sprintf("pages/%s", r.FileName())
-		err := os.WriteFile(filename, r.Body, 0666)
+		AddVisited(db, r.Request.URL.String())
+		content_id, err := AddContent(db, r.Body)
 		if err != nil {
-			slog.Error("failed to write page to disk", "filename", filename, "err", err)
+			slog.Error("failed to add content", "err", err)
 		}
 
+		_, err = AddPageVisit(db, r.Request.URL.String(), r.StatusCode, content_id)
+		if err != nil {
+			slog.Error("failed to add page visit", "err", err)
+		}
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL)
+		slog.Info("Visiting page", "url", r.URL)
 	})
 
-	err := c.Visit("https://www.ida.liu.se/")
+	err = c.Visit("https://www.ida.liu.se/")
 	if err != nil {
 		slog.Error("failed to visit the root page", "err", err)
 	}

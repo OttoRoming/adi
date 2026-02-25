@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS visited (
+    url TEXT PRIMARY KEY NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS page_visit (
+    id TEXT PRIMARY KEY NOT NULL,
+    date INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    status_code INTEGER NOT NULL,
+    content_id TEXT NOT NULL,
+    FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS content (
+    id TEXT PRIMARY KEY NOT NULL,
+    content BLOB UNIQUE NOT NULL,
+    sha512_hash TEXT UNIQUE NOT NULL
+)
